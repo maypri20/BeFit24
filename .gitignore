@@ -1,0 +1,51 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.env
+.env.*
+*.env
+
+Jupyter & Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+.notebook/
+
+
+data/*.csv
+data/*.xlsx
+data/*.xls
+data/*.db
+
+
+SQL & Logs
+*.log
+sql/*.db
+sql/*.sqlite
+sql/__pycache__/
+
+
+Streamlit & Cache
+.streamlit/
+app/__pycache__/
+
+
+
+Virtual Environment
+env/
+venv/
+.venv/
+
+OS-Specific Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+Tableau and Exports
+
+outputs/*.twb
+outputs/*.twbx
+outputs/*.pptx
