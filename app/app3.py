@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import yaml
 import gower
+import plotly.express as px
+import plotly.graph_objects as go
 
 # =========================
 # Load your config + dataset
@@ -36,8 +38,8 @@ st.sidebar.header("Your Profile Input")
 st.sidebar.subheader("📏 Body Metrics")
 gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
 age = st.sidebar.slider("Age (years)", min_value=16, max_value=80, value=35)
-height_m = st.sidebar.slider("Height (m)", min_value=1.3, max_value=2.1, value=1.70, step=0.01)
-weight_kg = st.sidebar.slider("Weight (kg)", min_value=39.0, max_value=130.0, value=106.0, step=0.1)
+height_m = st.sidebar.slider("Height (m)", min_value=1.3, max_value=2.1, value=1.80, step=0.01)
+weight_kg = st.sidebar.slider("Weight (kg)", min_value=39.0, max_value=130.0, value=78.0, step=0.1)
 
 st.sidebar.subheader("🏋️ Workout Details")
 workout_type = st.sidebar.selectbox("Workout Type", ["Cardio", "Hiit", "Strength", "Yoga"])
@@ -101,6 +103,25 @@ def analyze_body_composition(df,gender, age, height_m, weight_kg, diet_type,
     matched_rows = df.iloc[topk_idx]
     matched_row = matched_rows.mean(numeric_only=True)
 
+
+    # Prepare comparison dataframe
+    comparison_df = matched_rows[["age", "height_m", "weight_kg", "calories_burned", "avg_bpm","calories", "proteins", "carbs", "fats"
+                                 ]].copy()
+
+# Add user's own data as a row
+    user_data = {
+        "age": age,
+        "height_m": height_m,
+        "weight_kg": weight_kg,
+        "calories_burned": calories_burned,
+        "avg_bpm": avg_bpm,
+        "calories": calories_intake,
+        "proteins": proteins,
+        "carbs": carbs,
+        "fats": fats}
+    comparison_df = pd.concat([comparison_df, pd.DataFrame([user_data])], ignore_index=True)
+    comparison_df["Profile"] = ["Similar 1", "Similar 2", "Similar 3", "You"]
+
     # --- Derived Metrics ---
     bmi = weight_kg / (height_m ** 2)
     gender_factor = 1 if gender.lower() == "male" else 0
@@ -158,7 +179,7 @@ def analyze_body_composition(df,gender, age, height_m, weight_kg, diet_type,
         else: fat_category = "Obese"
 
     return {
-        "matched_rows": matched_rows,
+        "matched_rows": matched_rows,"comparison_df": comparison_df,
         "bmi": bmi,
         "bmi_category": bmi_category,
         "bmi_reco": bmi_reco,
@@ -182,9 +203,10 @@ if run_button:
         calories_intake, proteins, carbs, fats, goal
     )
     matched_rows = results["matched_rows"]
+    comparison_df = results["comparison_df"]
 
-    st.subheader("📊 Top 3 Similar Profiles (Gower Similarity)")
-    st.dataframe(matched_rows[["age", "height_m", "weight_kg", "diet_type", "workout_type"]])
+    #st.subheader("📊 Top 3 Similar Profiles (Gower Similarity)")
+    #st.dataframe(matched_rows[["age", "height_m", "weight_kg", "diet_type", "workout_type"]])
 
     # KPI Cards
     c1, c2, c3, c4 = st.columns(4)
@@ -199,6 +221,88 @@ if run_button:
     c7.metric("Nutrition Quality", f"{results['nutrition_quality']:.2f}")
 
     st.markdown("---")
+    st.markdown("### 📊 Comparison with Similar Profiles")
+
+    # --- 1️⃣ Bar Chart: Calories vs Burn ---
+    fig1 = px.bar(
+        comparison_df,
+        x="Profile",
+        y=["calories", "calories_burned"],
+        barmode="group",
+        title="🔥 Calories Consumed vs Burned (Comparison)",
+        labels={"value": "Calories (kcal)", "variable": "Type"},
+        color_discrete_sequence=["#00b4d8", "#ff8c00"]
+    )
+    st.plotly_chart(fig1, use_container_width=True)
+
+    # --- 2️⃣ Horizontal Bar Chart: Core Fitness & Nutrition Metrics ---
+    core_metrics = pd.DataFrame({
+        "Metric": ["BMI", "Body Fat %", "Protein/kg", "Hydration", "Nutrition Quality"],
+        "You": [
+            results["bmi"], results["body_fat_percentage"], results["protein_per_kg"],
+            results["hydration_score"], results["nutrition_quality"]
+        ],
+        "Similar Avg": [
+            (matched_rows["weight_kg"].mean() / (matched_rows["height_m"].mean() ** 2)),
+            results["body_fat_percentage"],  # placeholder if dataset lacks body fat info
+            (matched_rows["proteins"].mean() / matched_rows["weight_kg"].mean()),
+            matched_rows["water_intake_liters"].mean() / (matched_rows["weight_kg"].mean() * 0.033),
+            results["nutrition_quality"]
+        ]
+    })
+
+    fig2 = px.bar(
+        core_metrics,
+        x=["You", "Similar Avg"],
+        y="Metric",
+        barmode="group",
+        orientation="h",
+        title="💪 Core Fitness & Nutrition Metrics: You vs Similar Profiles",
+        labels={"value": "Score", "Metric": "Metric"},
+        color_discrete_sequence=["#0077b6", "#ff7f0e"]
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # --- 3️⃣ Pie Chart for Workout Efficiency Comparison ---
+    workout_eff_df = pd.DataFrame({
+        "Profile": ["You", "Similar Avg"],
+        "Workout Efficiency (kcal/hr)": [results["workout_efficiency"], matched_rows["calories_burned"].mean()]
+    })
+
+    fig3 = px.pie(
+        workout_eff_df,
+        names="Profile",
+        values="Workout Efficiency (kcal/hr)",
+        hole=0.4,
+        title="🏋️ Workout Efficiency Distribution",
+        color="Profile",
+        color_discrete_sequence=["#1f77b4", "#ff7f0e"]
+    )
+    fig3.update_traces(textinfo="percent+label", pull=[0.05, 0])
+    st.plotly_chart(fig3, use_container_width=True)
+    
+    # --- 4️⃣ Donut Chart: Macronutrient Distribution ---
+    macros = pd.DataFrame({
+        "Nutrient": ["Protein", "Carbs", "Fats"],
+        "Grams": [proteins, carbs, fats],
+        "Calories": [proteins * 4, carbs * 4, fats * 9]
+    })
+
+    total_cals = macros["Calories"].sum()
+    macros["% of Calories"] = (macros["Calories"] / total_cals) * 100
+
+    fig4 = px.pie(
+        macros,
+        values="% of Calories",
+        names="Nutrient",
+        hole=0.5,
+        title="🍎 Macronutrient Distribution (% of Total Calories)",
+        color_discrete_sequence=["#0077b6", "#90be6d", "#f8961e"]
+    )
+    fig4.update_traces(textinfo="percent+label", pull=[0.05, 0, 0])
+    st.plotly_chart(fig4, use_container_width=True)
+
+
 
     # =========================
     # Recommendations
