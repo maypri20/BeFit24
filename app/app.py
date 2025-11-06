@@ -296,7 +296,7 @@ if run_button:
     with col3:
         # --- 3️⃣ Pie Chart for Workout Efficiency Comparison ---
         workout_eff_df = pd.DataFrame({
-            "Profile": ["You", "Similar Avg"],
+            "Profile": ["You", "Profile's Avg"],
             "Workout Efficiency (kcal/hr)": [results["workout_efficiency"], matched_rows["calories_burned"].mean()]
         })
 
@@ -337,7 +337,7 @@ if run_button:
     # =========================
     # Recommendations
     # =========================
-    st.subheader(f"💡 Personalized Recommendations for Your Goal: *{goal}*")
+    st.subheader(f" Personalized Recommendations for Your Goal: *{goal}*")
 
     recs = []
 
