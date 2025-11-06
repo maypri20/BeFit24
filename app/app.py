@@ -22,13 +22,13 @@ except Exception as e:
 # =========================
 st.set_page_config(
     page_title="BeFit24 - Nutrition & Fitness journey",
-    page_icon="../figures/image.png",
+    page_icon="figures/image.png",
     layout="wide"
 )
 col1, col2 = st.columns([1, 4])
 
 with col1:
-    st.image("../figures/image.png", width=120) 
+    st.image("figures/image.png", width=120) 
 
 with col2:
     st.markdown("""
