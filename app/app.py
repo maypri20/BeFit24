@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 # Load your config + dataset
 # =========================
 try:
-    with open("../config.yaml", "r") as file:
+    with open("config.yaml", "r") as file:
         config = yaml.safe_load(file)
     df = pd.read_csv(config['output_data']['file'])
 except Exception as e:
