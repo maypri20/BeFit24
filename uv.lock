@@ -436,6 +436,7 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "gower" }
     { name = "plotly" },
     { name = "pymysql" },
     { name = "scikit-learn" },
