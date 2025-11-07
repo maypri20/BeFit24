@@ -1,5 +1,0 @@
-input_data:
-  file: "data/raw/raw_data.csv"
-
-output_data:
-  file: "data/clean/clean_data.csv"
